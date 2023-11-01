@@ -33,14 +33,16 @@ module.exports.register = (app, database) => {
         let query = 'SELECT count(*) AS userCount FROM Users WHERE Username = ?'
         await database.query(query, [username], (err, result) => {
             if (err) throw err;
-
+            
+            // If the userCount is not equal to 0, then a user with that username
+            // already exists. Thus, we exit early.
             if (parseInt(result[0].userCount) > 0) {
                 res.status.send("User already exists with username " + username).end();
                 return;
             }
         });
 
-
+        // We are good to create a new user. Insert new user into the database.
         query = 'INSERT INTO Users (Username, Salt) VALUES (?, ?)'
         await database.query(query, [username, password], (err, result) => {
             if (err) {
