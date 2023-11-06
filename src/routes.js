@@ -25,20 +25,20 @@ module.exports.register = (app, database) => {
      * stored in the database if the new user is successfully created.
      */
     app.post('/api/users', async (req, res) => {
-        let username = req.query.username;
-        let password = req.query.password;
-
         let status = "";
         let message = "";
 
         // Check if username and password are defined.
-        if (typeof username == UNDEFINED || typeof password == UNDEFINED) {
+        if (typeof req.query.username === undefined || typeof req.query.password === undefined) {
             status = "Unsuccessful";
             message = "Both username and password must be defined."
 
             req.status(404).send(`${status}: ${message}`).end();
             return; // Early return if either are undefined.
         }
+
+        let username = req.query.username;
+        let password = req.query.password;
 
         // We should also make sure the username and password aren't SQL injections.
         // if (username is SQL injection || password is SQL injection) {
@@ -69,6 +69,44 @@ module.exports.register = (app, database) => {
         const results = await createUserQuery;
         status = "Successful";
         message = `User with the username "${username}" has been created.`;
-        res.status(200).send(`$status: ${message}`).end();
+        res.status(200).send(`${status}: ${message}`).end();
+    });
+
+    app.get('/api/playlists', async (req, res) => {
+        let message = "";
+        let status = "";
+
+        // Check if login token is valid
+        if (typeof req.body.loginToken === undefined) {
+            status = "Unsuccessful";
+            message = "User is not logged in or their login token is invalid."
+            res.status(404).send(`${status}: ${message}`).end();
+            return;
+        }
+
+        let loginToken = req.body.loginToken;
+        
+        const userIdQuery = database.query(
+            'SELECT user_id AS userId FROM login_tokens WHERE guid = ?',
+            [loginToken]
+        );
+
+        const userIdResults = await userIdQuery;
+        if (userIdResults[0] === undefined) {
+            status = "Unsuccessful";
+            message = "User is not logged in or their login token is invalid."
+            res.status(404).send(`${status}: ${message}`).end();
+            return;
+        }
+
+        const userId = userIdResults[0].userId;
+
+        const playlistsQuery = database.query(
+            'SELECT * FROM playlists WHERE owner_id = ?',
+            [userId]
+        );
+
+        const playlistObj = await playlistsQuery;
+        res.status(200).send(JSON.stringify(playlistObj)).end();
     });
 };
