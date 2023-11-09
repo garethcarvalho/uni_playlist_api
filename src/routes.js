@@ -17,7 +17,7 @@ module.exports.register = (app, database) => {
                 [id]
             );
         } else {
-            query = database.query('SELECT * FROM rest_emp');
+            query = database.query('SELECT * FROM users');
         }
 
         const records = await query;
@@ -54,7 +54,7 @@ module.exports.register = (app, database) => {
         // }
 
         const checkQuery = database.query(
-            'SELECT COUNT(*) AS userCount FROM Users WHERE Username = ?',
+            'SELECT COUNT(*) AS userCount FROM users WHERE username = ?',
             [username]
         );
         
@@ -69,7 +69,7 @@ module.exports.register = (app, database) => {
       
         // Insert User into Table.
         const createUserQuery = database.query(
-            'INSERT INTO Users (Username, Salt) VALUES (?, ?)',
+            'INSERT INTO users (username, password) VALUES (?, ?)',
             [username, password]
         );
         
