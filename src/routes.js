@@ -37,7 +37,7 @@ module.exports.register = (app, database) => {
         let message = "";
 
         // Check if username and password are defined.
-        if (typeof req.body.username === undefined || typeof req.body.password === undefined) {
+        if (typeof req.body.username == null || typeof req.body.password == null) {
             status = "Unsuccessful";
             message = "Both username and password must be defined."
 
