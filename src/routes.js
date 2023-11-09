@@ -8,14 +8,22 @@ module.exports.register = (app, database) => {
         res.status(200).send("This is running!").end();
     });
 
-    // app.get('/api/resources', async (req, res) => {
-    //     let query;
-    //     query = database.query('SELECT * FROM rest_emp');
+    app.get('/api/users', async (req, res) => {
+        let query;
+        if (req.body.id) {
+            let id = req.body.id;
+            query = database.query(
+                'SELECT * FROM users WHERE id = ?',
+                [id]
+            );
+        } else {
+            query = database.query('SELECT * FROM rest_emp');
+        }
 
-    //     const records = await query;
+        const records = await query;
 
-    //     res.status(200).send(JSON.stringify(records)).end();
-    // });
+        res.status(200).send(JSON.stringify(records)).end();
+    });
 
     /**
      * Route to create a new Universal Playlist user.
@@ -29,7 +37,7 @@ module.exports.register = (app, database) => {
         let message = "";
 
         // Check if username and password are defined.
-        if (typeof req.query.username === undefined || typeof req.query.password === undefined) {
+        if (typeof req.body.username === undefined || typeof req.body.password === undefined) {
             status = "Unsuccessful";
             message = "Both username and password must be defined."
 
@@ -37,8 +45,8 @@ module.exports.register = (app, database) => {
             return; // Early return if either are undefined.
         }
 
-        let username = req.query.username;
-        let password = req.query.password;
+        let username = req.body.username;
+        let password = req.body.password;
 
         // We should also make sure the username and password aren't SQL injections.
         // if (username is SQL injection || password is SQL injection) {
@@ -49,11 +57,16 @@ module.exports.register = (app, database) => {
             'SELECT COUNT(*) AS userCount FROM Users WHERE Username = ?',
             [username]
         );
-
+        
+        // Check for existing user.
         const check = await checkQuery;
-
+        if (check[0].userCount != 0) {
+            status = "Unsuccessful";
+            message = "User already exists with that username";
+            req.status(404).send(`${status}: ${message}`).end();
+            return;
+        }
       
-
         // Insert User into Table.
         const createUserQuery = database.query(
             'INSERT INTO Users (Username, Salt) VALUES (?, ?)',
@@ -106,45 +119,45 @@ module.exports.register = (app, database) => {
 
 
     // api for logging in
-    app.post('/api/users', async (req, res) => {
-        let username = req.query.username;
-        let password = req.query.password;
+    // app.post('/api/users', async (req, res) => {
+    //     let username = req.query.username;
+    //     let password = req.query.password;
 
-        let status = "";
-        let message = "";
+    //     let status = "";
+    //     let message = "";
 
-        // Check if username and password are defined.
-        if (typeof username == UNDEFINED || typeof password == UNDEFINED) {
-            status = "Unsuccessful";
-            message = "Both username and password must be defined."
+    //     // Check if username and password are defined.
+    //     if (typeof username == UNDEFINED || typeof password == UNDEFINED) {
+    //         status = "Unsuccessful";
+    //         message = "Both username and password must be defined."
 
-            req.status(404).send(`${status}: ${message}`).end();
-            return; // Early return if either are undefined.
-        }
+    //         req.status(404).send(`${status}: ${message}`).end();
+    //         return; // Early return if either are undefined.
+    //     }
 
-        // We should also make sure the username and password aren't SQL injections.
-        // if (username is SQL injection || password is SQL injection) {
-        //    return;
-        // }
+    //     // We should also make sure the username and password aren't SQL injections.
+    //     // if (username is SQL injection || password is SQL injection) {
+    //     //    return;
+    //     // }
 
-        // check to see if password is correct.
-        const getPassword = database.query(
-            'SELECT password FROM Users WHERE Username = ?',
-            [username]
-        );
+    //     // check to see if password is correct.
+    //     const getPassword = database.query(
+    //         'SELECT password FROM Users WHERE Username = ?',
+    //         [username]
+    //     );
 
-        // use bcrypt to decode password and see if it is correct
-        if bcrypt.checkpw (password.encode('utf-8'), getPassword.encode('utf-8')){
-            status = "Successful";
-            message = "password correct";
-            res.status(200).send(`$status: ${message}`).end();
-        } else {
-            status = "Successful";
-            message = "password incorrect";
-            res.status(401).send(`$status: ${message}`).end();
-        }
+    //     // use bcrypt to decode password and see if it is correct
+    //     if bcrypt.checkpw (password.encode('utf-8'), getPassword.encode('utf-8')){
+    //         status = "Successful";
+    //         message = "password correct";
+    //         res.status(200).send(`$status: ${message}`).end();
+    //     } else {
+    //         status = "Successful";
+    //         message = "password incorrect";
+    //         res.status(401).send(`$status: ${message}`).end();
+    //     }
         
         
-    });
+    // });
 
 };
