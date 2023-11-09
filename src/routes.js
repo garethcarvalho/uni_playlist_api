@@ -37,16 +37,17 @@ module.exports.register = (app, database) => {
         let message = "";
 
         // Check if username and password are defined.
-        if (typeof req.body.username == null || typeof req.body.password == null) {
+        if (req.body.username ===  undefined || req.body.password === undefined || req.body.email === undefined) {
             status = "Unsuccessful";
-            message = "Both username and password must be defined."
+            message = "Username, email, and password must be defined.";
 
-            req.status(404).send(`${status}: ${message}`).end();
+            res.status(404).send(`${status}: ${message}`).end();
             return; // Early return if either are undefined.
         }
 
         let username = req.body.username;
         let password = req.body.password;
+	let email = req.body.email;
 
         // We should also make sure the username and password aren't SQL injections.
         // if (username is SQL injection || password is SQL injection) {
@@ -54,23 +55,23 @@ module.exports.register = (app, database) => {
         // }
 
         const checkQuery = database.query(
-            'SELECT COUNT(*) AS userCount FROM users WHERE username = ?',
-            [username]
+            'SELECT COUNT(*) AS userCount FROM users WHERE username = ? OR email = ?',
+            [username, email]
         );
         
         // Check for existing user.
         const check = await checkQuery;
         if (check[0].userCount != 0) {
             status = "Unsuccessful";
-            message = "User already exists with that username";
-            req.status(404).send(`${status}: ${message}`).end();
+            message = "User already exists with that username or email";
+            res.status(404).send(`${status}: ${message}`).end();
             return;
         }
       
         // Insert User into Table.
         const createUserQuery = database.query(
-            'INSERT INTO users (username, password) VALUES (?, ?)',
-            [username, password]
+            'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+            [username, password, email]
         );
         
         const results = await createUserQuery;
