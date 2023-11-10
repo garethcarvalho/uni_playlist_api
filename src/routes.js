@@ -32,53 +32,53 @@ module.exports.register = (app, database) => {
      * @param {string} password - The password for the new user. Is salted and then
      * stored in the database if the new user is successfully created.
      */
-    app.post('/api/users', async (req, res) => {
-        let status = "";
-        let message = "";
+    // app.post('/api/users', async (req, res) => {
+    //     let status = "";
+    //     let message = "";
 
-        // Check if username and password are defined.
-        if (req.body.username ===  undefined || req.body.password === undefined || req.body.email === undefined) {
-            status = "Unsuccessful";
-            message = "Username, email, and password must be defined.";
+    //     // Check if username and password are defined.
+    //     if (req.body.username ===  undefined || req.body.password === undefined || req.body.email === undefined) {
+    //         status = "Unsuccessful";
+    //         message = "Username, email, and password must be defined.";
 
-            res.status(404).send(`${status}: ${message}`).end();
-            return; // Early return if either are undefined.
-        }
+    //         res.status(404).send(`${status}: ${message}`).end();
+    //         return; // Early return if either are undefined.
+    //     }
 
-        let username = req.body.username;
-        let password = req.body.password;
-	    let email = req.body.email;
+    //     let username = req.body.username;
+    //     let password = req.body.password;
+	//     let email = req.body.email;
 
-        // We should also make sure the username and password aren't SQL injections.
-        // if (username is SQL injection || password is SQL injection) {
-        //    return;
-        // }
+    //     // We should also make sure the username and password aren't SQL injections.
+    //     // if (username is SQL injection || password is SQL injection) {
+    //     //    return;
+    //     // }
 
-        const checkQuery = database.query(
-            'SELECT COUNT(*) AS userCount FROM users WHERE username = ? OR email = ?',
-            [username, email]
-        );
+    //     const checkQuery = database.query(
+    //         'SELECT COUNT(*) AS userCount FROM users WHERE username = ? OR email = ?',
+    //         [username, email]
+    //     );
         
-        // Check for existing user.
-        const check = await checkQuery;
-        if (check[0].userCount != 0) {
-            status = "Unsuccessful";
-            message = "User already exists with that username or email";
-            res.status(404).send(`${status}: ${message}`).end();
-            return;
-        }
+    //     // Check for existing user.
+    //     const check = await checkQuery;
+    //     if (check[0].userCount != 0) {
+    //         status = "Unsuccessful";
+    //         message = "User already exists with that username or email";
+    //         res.status(404).send(`${status}: ${message}`).end();
+    //         return;
+    //     }
       
-        // Insert User into Table.
-        const createUserQuery = database.query(
-            'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
-            [username, password, email]
-        );
+    //     // Insert User into Table.
+    //     const createUserQuery = database.query(
+    //         'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+    //         [username, password, email]
+    //     );
         
-        const results = await createUserQuery;
-        status = "Successful";
-        message = `User with the username "${username}" has been created.`;
-        res.status(200).send(`${status}: ${message}`).end();
-    });
+    //     const results = await createUserQuery;
+    //     status = "Successful";
+    //     message = `User with the username "${username}" has been created.`;
+    //     res.status(200).send(`${status}: ${message}`).end();
+    // });
 
     app.post('/api/users', async (req, res) => {
         // Check if username and password are defined.
@@ -220,4 +220,5 @@ async function loginUser(username, password, email, database) {
 }
 
 async function createUser(username, password, email) {
+    return [404, "not implemented"];
 }
