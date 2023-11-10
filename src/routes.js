@@ -158,6 +158,8 @@ async function loginUser(username, password, email, database) {
             [loginToken, userIdResults[0].id]
         );
     }
+
+    await tokenQuery;
     
     let message = `{"token":"${loginToken}"}`
     return [200, message];
