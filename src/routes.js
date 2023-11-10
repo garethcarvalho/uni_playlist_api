@@ -47,7 +47,7 @@ module.exports.register = (app, database) => {
 
         let username = req.body.username;
         let password = req.body.password;
-	let email = req.body.email;
+	    let email = req.body.email;
 
         // We should also make sure the username and password aren't SQL injections.
         // if (username is SQL injection || password is SQL injection) {
@@ -78,6 +78,40 @@ module.exports.register = (app, database) => {
         status = "Successful";
         message = `User with the username "${username}" has been created.`;
         res.status(200).send(`${status}: ${message}`).end();
+    });
+
+    app.post('/api/users', async (req, res) => {
+        // Check if username and password are defined.
+        if (req.body.username ===  undefined || req.body.password === undefined || req.body.email === undefined) {
+            res.status(404).send('Username, email, and password must be defined.').end();
+            return; // Early return if either are undefined.
+        }
+
+        if (req.body.callType === undefined) {
+            res.status(404).send('callType is undefined. Use "callType":"login" to login, or "calltype":"createUser" to create a new user').end();
+            return;
+        }
+
+        let username = req.body.username;
+        let password = req.body.password;
+        let email = req.body.email;
+
+        const callType = req.body.callType;
+        let statusMsg = "";
+
+        switch (callType) {
+            case 'login':
+                statusMsg = loginUser(username, password, email);
+                break;
+            case 'createUser':
+                statusMsg = createUser(username, password, email);
+                break;
+            default:
+                statusMsg = [404, 'callType is invalid. Use "callType":"login" to login, or "calltype":"createUser" to create a new user'];
+        }
+
+        res.status(statusMsg[0]).send(statusMessage[1]).end();
+
     });
 
     app.get('/api/playlists', async (req, res) => {
@@ -117,7 +151,6 @@ module.exports.register = (app, database) => {
         const playlistObj = await playlistsQuery;
         res.status(200).send(JSON.stringify(playlistObj)).end();
     });
-
 
     // api for logging in
     // app.post('/api/users', async (req, res) => {
@@ -162,3 +195,29 @@ module.exports.register = (app, database) => {
     // });
 
 };
+
+async function loginUser(username, password, email, database) {
+    const checkQuery = database.query(
+        'SELECT COUNT(*) AS userCount FROM users WHERE username = ? AND email = ?',
+        [username, email]
+    );
+    
+    // Check for existing user.
+    const check = await checkQuery;
+    if (check[0].userCount == 0) {
+        return [404, "Username or Email is invalid"];
+    }
+
+    // Query for the userId and create the login token.
+    const uuid = crypto.randomUUID();
+    const userQuery = database.query(
+        'SELECT id FROM users WHERE username = ? AND email = ?',
+        [username, email]
+    );
+
+    const userId = await userQuery;
+    return [200, JSON.stringify(userId)];
+}
+
+async function createUser(username, password, email) {
+}
