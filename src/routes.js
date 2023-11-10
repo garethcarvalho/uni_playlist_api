@@ -1,6 +1,6 @@
 "use strict";
 
-const UNDEFINED = "undefined";
+const { v4: uuidv4 } = require('uuid');
 
 module.exports.register = (app, database) => {
 
@@ -97,20 +97,20 @@ module.exports.register = (app, database) => {
         let email = req.body.email;
 
         const callType = req.body.callType;
-        let statusMsg = "";
+        let statusMsg;
 
         switch (callType) {
             case 'login':
-                statusMsg = loginUser(username, password, email);
+                statusMsg = await loginUser(username, password, email, database);
                 break;
             case 'createUser':
-                statusMsg = createUser(username, password, email);
+                statusMsg = await createUser(username, password, email, database);
                 break;
             default:
                 statusMsg = [404, 'callType is invalid. Use "callType":"login" to login, or "calltype":"createUser" to create a new user'];
         }
 
-        res.status(statusMsg[0]).send(statusMessage[1]).end();
+        res.status(statusMsg[0]).send(statusMsg[1]).end();
 
     });
 
@@ -197,9 +197,10 @@ module.exports.register = (app, database) => {
 };
 
 async function loginUser(username, password, email, database) {
+    console.log(`${username} ${password} ${email}`);
     const checkQuery = database.query(
-        'SELECT COUNT(*) AS userCount FROM users WHERE username = ? AND email = ?',
-        [username, email]
+        'SELECT COUNT(*) AS userCount FROM users WHERE username = ? AND email = ? AND password = ?',
+        [username, email, password]
     );
     
     // Check for existing user.
@@ -209,14 +210,21 @@ async function loginUser(username, password, email, database) {
     }
 
     // Query for the userId and create the login token.
-    const uuid = crypto.randomUUID();
     const userQuery = database.query(
-        'SELECT id FROM users WHERE username = ? AND email = ?',
-        [username, email]
+        'SELECT id FROM users WHERE username = ? AND email = ? AND password = ?',
+        [username, email, password]
     );
+    
+    const userIdResults = await userQuery;
+    const loginToken = uuidv4();
 
-    const userId = await userQuery;
-    return [200, JSON.stringify(userId)];
+    const tokenQuery = database.query(
+	'INSERT INTO login_tokens (token_guid, user_id) VALUES (?, ?)',
+	[loginToken, userIdResults[0].id]
+    );
+    
+    let message = `{"token":"${loginToken}"}`
+    return [200, message];
 }
 
 async function createUser(username, password, email) {
