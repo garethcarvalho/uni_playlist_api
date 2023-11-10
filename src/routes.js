@@ -139,10 +139,25 @@ async function loginUser(username, password, email, database) {
     // Create the login token.
     const loginToken = uuidv4();
 
-    const tokenQuery = database.query(
-	    'INSERT INTO login_tokens (token_guid, user_id) VALUES (?, ?)',
-	    [loginToken, userIdResults[0].id]
+    const tokenCheck = database.query(
+        'SELECT COUNT(*) AS tokenCount FROM login_tokens WHERE user_id = ?',
+        [userIdResults[0]]
     );
+
+    const tokenCheckResults = await tokenCheck;
+
+    let tokenQuery;
+    if (tokenCheckResults[0].tokenCount == 0) {
+        tokenQuery = database.query(
+            'INSERT INTO login_tokens (token_guid, user_id) VALUES (?, ?)',
+            [loginToken, userIdResults[0].id]
+        );
+    } else {
+        tokenQuery = database.query(
+            'UPDATE login_tokens SET token_guid = ? WHERE user_id = ?',
+            [loginToken, userIdResults[0].id]
+        );
+    }
     
     let message = `{"token":"${loginToken}"}`
     return [200, message];
