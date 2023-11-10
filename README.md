@@ -21,4 +21,4 @@ BaseURL: https://your-website-address.com/
 | :-------------: |:-----------| :-------------------: | ---------- |
 | GET   | /api/users | None      | Lists all users.              |
 | GET   | /api/users | id (Body) | Lists user with specific id.  |
-| POST  | /api/users | username (Body) <br> password (Body) <br> email (Body) <br> callType (Body) | Depending on the contents of `callType`, will create a new user, or return a login token. <br> To login: `"callType":"createUser"` <br> To create user: `"callType":"login"` |
+| POST  | /api/users | username (Body) <br> password (Body) <br> email (Body) <br> callType (Body) | Depending on the contents of `callType`, will create a new user, or return a login token. <br> To login: `"callType":"createUser"` <br> To create user: `"callType":"login"`
