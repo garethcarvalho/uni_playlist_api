@@ -67,42 +67,47 @@ module.exports.register = (app, database) => {
 
     });
 
-    app.get('/api/playlists', async (req, res) => {
-        let message = "";
-        let status = "";
+    app.get('/api/playlists/:playlistId', async (req, res) => {
+        if (req.params.playlistId === undefined) {
+            if (req.body.loginToken === undefined) {
+                res.status(404).message("User is not logged in or their login token is invalid.").end();
+                return;
+            }
 
-        // Check if login token is valid
-        if (typeof req.body.loginToken === undefined) {
-            status = "Unsuccessful";
-            message = "User is not logged in or their login token is invalid."
-            res.status(404).send(`${status}: ${message}`).end();
+            const loginQuery = database.query(
+                'SELECT user_id as userId FROM login_tokens WHERE token_guid = ?',
+                [loginToken]
+            );
+
+            const loginObj = await loginQuery;
+            if (loginObj[0] === undefined) {
+                res.status(404).message("User is not logged in or their login token is invalid.").end();
+                return;
+            }
+
+            const playlistsQuery = database.query(
+                'SELECT * FROM playlists WHERE user_id = ?',
+                [loginObj[0].userId]
+            );
+
+            const playlistsObj = await playlistsQuery;
+            res.status(200).message(JSON.stringify(playlistsObj)).end();
             return;
         }
 
-        let loginToken = req.body.loginToken;
+        const playlistQuery = database.query(
+            'SELECT * FROM playlists WHERE id = ?',
+            [playlistId]
+        );
+
+        const playlistObj = await playlistQuery;
+        if (playlistObj[0] === undefined) {
+            res.status(404).message('Playlist not found.').end();
+            return;
+        }
+
+        res.status(200).message(JSON.stringify(playlistObj)).end();
         
-        const userIdQuery = database.query(
-            'SELECT user_id AS userId FROM login_tokens WHERE guid = ?',
-            [loginToken]
-        );
-
-        const userIdResults = await userIdQuery;
-        if (userIdResults[0] === undefined) {
-            status = "Unsuccessful";
-            message = "User is not logged in or their login token is invalid."
-            res.status(404).send(`${status}: ${message}`).end();
-            return;
-        }
-
-        const userId = userIdResults[0].userId;
-
-        const playlistsQuery = database.query(
-            'SELECT * FROM playlists WHERE owner_id = ?',
-            [userId]
-        );
-
-        const playlistObj = await playlistsQuery;
-        res.status(200).send(JSON.stringify(playlistObj)).end();
     });
 };
 
