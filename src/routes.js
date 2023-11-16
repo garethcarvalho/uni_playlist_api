@@ -2,7 +2,7 @@
 
 const { v4: uuidv4 } = require('uuid');
 
-module.exports.register = (app, database) => {
+module.exports.register = (app, database, firebaseApp) => {
 
     app.get('/', async (req, res) => {
         res.status(200).send("This is running!").end();

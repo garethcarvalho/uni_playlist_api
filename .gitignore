@@ -4,3 +4,4 @@
 node_modules
 cloud_sql_proxy
 *.code-workspace
+firebase-admin.json
